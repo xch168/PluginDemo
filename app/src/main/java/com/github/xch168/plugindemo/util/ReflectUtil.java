@@ -10,8 +10,7 @@ public class ReflectUtil {
     public static Object getField(Class clazz, Object target, String name) throws NoSuchFieldException, IllegalAccessException {
         Field field = clazz.getDeclaredField(name);
         field.setAccessible(true);
-        field.get(target);
-        return field;
+        return field.get(target);
     }
 
     public static Field getField(Class clazz, String name) throws NoSuchFieldException {

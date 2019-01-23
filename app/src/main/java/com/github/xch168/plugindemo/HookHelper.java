@@ -1,5 +1,7 @@
 package com.github.xch168.plugindemo;
 
+import android.app.Instrumentation;
+import android.content.Context;
 import android.os.Build;
 
 import com.github.xch168.plugindemo.util.ReflectUtil;
@@ -29,5 +31,14 @@ public class HookHelper {
         Class<?> iActivityManagerClass = Class.forName("android.app.IActivityManager");
         Object proxy = Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[]{iActivityManagerClass}, new IActivityManagerProxy(iActivityManager));
         ReflectUtil.setField(singletonClass, singleton, "mInstance", proxy);
+    }
+
+    public static void hookInstrumentation(Context context) throws Exception {
+        Class<?> contextImplClass = Class.forName("android.app.ContextImpl");
+        Object activityThread = ReflectUtil.getField(contextImplClass, context, "mMainThread");
+        Class<?> activityThreadClass = Class.forName("android.app.ActivityThread");
+        Object mInstrumentation = ReflectUtil.getField(activityThreadClass, activityThread, "mInstrumentation");
+
+        ReflectUtil.setField(activityThreadClass, activityThread, "mInstrumentation", new InstrumentationProxy((Instrumentation) mInstrumentation, context.getPackageManager()));
     }
 }

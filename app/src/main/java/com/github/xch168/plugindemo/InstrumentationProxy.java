@@ -31,8 +31,8 @@ public class InstrumentationProxy extends Instrumentation {
 
         List<ResolveInfo> infos = mPackageManager.queryIntentActivities(intent, PackageManager.MATCH_ALL);
         if (infos == null || infos.size() == 0) {
-            intent.setClassName(who, "com.github.xch168.plugindemo.StubActivity");
             intent.putExtra(HookHelper.TARGET_INTENT, intent.getComponent().getClassName());
+            intent.setClassName(who, "com.github.xch168.plugindemo.StubActivity");
         }
         try {
             Method execMethod = Instrumentation.class.getDeclaredMethod("execStartActivity", Context.class,
