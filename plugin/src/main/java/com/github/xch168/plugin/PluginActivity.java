@@ -13,8 +13,7 @@ public class PluginActivity extends AppCompatActivity {
     }
 
     @Override
-    public Resources getResources()
-    {
+    public Resources getResources() {
         return getApplication() != null && getApplication().getResources() != null ? getApplication().getResources() : super.getResources();
     }
 }

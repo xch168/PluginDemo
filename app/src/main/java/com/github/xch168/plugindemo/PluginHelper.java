@@ -26,7 +26,16 @@ public class PluginHelper {
     private static final String FIELD_PATH_LIST = "pathList";
     private static final String FIELD_DEX_ELEMENTS = "dexElements";
 
+    private static Resources sPluginResources;
+
     public static void loadPlugin(Context context, ClassLoader hostClassLoader) throws Exception {
+        loadPluginClass(context, hostClassLoader);
+        initPluginResource(context);
+        Toast.makeText(context, "插件加载成功", Toast.LENGTH_SHORT).show();
+    }
+
+    private static void loadPluginClass(Context context, ClassLoader hostClassLoader) throws Exception {
+        // Step1. 获取到插件apk，通常都是从网络上下载，这里为了演示，直接将插件apk push到手机
         File pluginFile = context.getExternalFilesDir("plugin");
         Log.i(TAG, "pluginPath:" + pluginFile.getAbsolutePath());
         if (pluginFile == null || !pluginFile.exists() || pluginFile.listFiles().length == 0) {
@@ -34,17 +43,23 @@ public class PluginHelper {
             return;
         }
         pluginFile = pluginFile.listFiles()[0];
-        DexClassLoader pluginClassLoader = new DexClassLoader(pluginFile.getAbsolutePath(), pluginFile.getAbsolutePath(), null, hostClassLoader);
+        // Step2. 创建插件的DexClassLoader
+        DexClassLoader pluginClassLoader = new DexClassLoader(pluginFile.getAbsolutePath(), null, null, hostClassLoader);
+        // Step3. 通过反射获取到pluginClassLoader中的pathList字段
         Object pluginDexPathList = ReflectUtil.getField(BaseDexClassLoader.class, pluginClassLoader, FIELD_PATH_LIST);
+        // Step4. 通过反射获取到DexPathList的dexElements字段
         Object pluginElements = ReflectUtil.getField(Class.forName(CLASS_DEX_PATH_LIST), pluginDexPathList, FIELD_DEX_ELEMENTS);
 
+        // Step5. 通过反射获取到宿主工程中ClassLoader的pathList字段
         Object hostDexPathList = ReflectUtil.getField(BaseDexClassLoader.class, hostClassLoader, FIELD_PATH_LIST);
+        // Step6. 通过反射获取到宿主工程中DexPathList的dexElements字段
         Object hostElements = ReflectUtil.getField(Class.forName(CLASS_DEX_PATH_LIST), hostDexPathList, FIELD_DEX_ELEMENTS);
 
+        // Step7. 将插件ClassLoader中的dexElements合并到宿主ClassLoader的dexElements
         Object array = combineArray(hostElements, pluginElements);
+
+        // Step8. 将合并的dexElements设置到宿主ClassLoader
         ReflectUtil.setField(Class.forName(CLASS_DEX_PATH_LIST), hostDexPathList, FIELD_DEX_ELEMENTS, array);
-        initPluginResource(context);
-        Toast.makeText(context, "插件加载成功", Toast.LENGTH_SHORT).show();
     }
 
     private static Object combineArray(Object hostElements, Object pluginElements) {
@@ -63,8 +78,11 @@ public class PluginHelper {
         AssetManager assetManager = clazz.newInstance();
         Method method = clazz.getMethod("addAssetPath", String.class);
         method.invoke(assetManager, context.getExternalFilesDir("plugin").listFiles()[0].getAbsolutePath());
-        Resources pluginResources = new Resources(assetManager, context.getResources().getDisplayMetrics(), context.getResources().getConfiguration());
-        ((App)context.getApplicationContext()).setPluginResources(pluginResources);
+        sPluginResources = new Resources(assetManager, context.getResources().getDisplayMetrics(), context.getResources().getConfiguration());
+    }
+
+    public static Resources getPluginResources() {
+        return sPluginResources;
     }
 
 }

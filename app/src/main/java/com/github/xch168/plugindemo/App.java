@@ -9,7 +9,6 @@ import android.content.res.Resources;
  */
 public class App extends Application {
 
-    private Resources mPluginResources;
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -23,13 +22,10 @@ public class App extends Application {
         }
     }
 
-    public void setPluginResources(Resources resources) {
-        mPluginResources = resources;
-    }
 
     @Override
     public Resources getResources() {
-        return mPluginResources == null ? super.getResources() : mPluginResources;
+        return PluginHelper.getPluginResources() == null ? super.getResources() : PluginHelper.getPluginResources();
     }
 
 }
